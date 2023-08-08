@@ -1,5 +1,7 @@
 // ref
 // https://asecuritysite.com/encryption/gorsa
+// https://stackoverflow.com/questions/44230634/how-to-read-an-rsa-key-from-file
+// https://golangdocs.com/rsa-encryption-decryption-in-golang
 
 package main
 
@@ -79,6 +81,20 @@ func ExportMsgAsPemStr(msg []byte) string {
 	return msg_pem
 }
 
+// 直接给私钥文本string载入
+func (r *rsaConfig) LoadPrivateKey(pemString string) {
+	block, _ := pem.Decode([]byte(pemString))
+	key, _ := x509.ParsePKCS1PrivateKey(block.Bytes)
+	r.privateKey = key
+}
+
+// 直接给公钥文本string载入
+func (r *rsaConfig) LoadPublicKey(pemString string) {
+	block, _ := pem.Decode([]byte(pemString))
+	key, _ := x509.ParsePKCS1PublicKey(block.Bytes)
+	r.publicKey = key
+}
+
 func main() {
 	err := myRsa.GenerateKey()
 	if err != nil {
@@ -110,4 +126,30 @@ func main() {
 	fmt.Printf("privateKeyText: %s\n", privateKeyText)
 	fmt.Printf("ExportMsgAsPemStr: %s\n", ExportMsgAsPemStr([]byte(content)))
 
+	// 将108-109行产出的文本再重新用一个接口传回myRsa设置密钥对，并检查再次执行105-106行的内容是否一样，
+	myRsa2 := &rsaConfig{}
+	myRsa2.LoadPrivateKey(privateKeyText)
+	myRsa2.LoadPublicKey(publicKeyText)
+
+	if myRsa2.ExportPrivateKeyAsPemStr() != privateKeyText {
+		log.Fatal("load key : private key incorrect")
+	}
+
+	if myRsa2.ExportPublicKeyAsPemStr() != publicKeyText {
+		log.Fatal("load key : public key incorrect")
+	}
+	fmt.Println("========================================================================")
+	fmt.Println("==myRsa2==")
+	cipherText, err = myRsa2.RSA_OAEP_Encrypt(content)
+	if err != nil {
+		log.Fatalf("encrypt err = %v", err)
+	}
+
+	fmt.Printf("encrypt result : %s\n", cipherText)
+
+	plainText, err = myRsa2.RSA_OAEP_Decrypt(cipherText)
+	if err != nil {
+		log.Fatalf("decrypt err = %v", err)
+	}
+	fmt.Printf("decrypt result : %s\n", plainText)
 }
