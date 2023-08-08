@@ -115,6 +115,9 @@ func main() {
 		log.Fatalf("decrypt err = %v", err)
 	}
 	fmt.Printf("decrypt result : %s\n", plainText)
+	if plainText != content {
+		log.Fatalf("plainText not equal content. plainText: %s", plainText)
+	}
 
 	fmt.Println("========================================================================")
 
@@ -152,4 +155,7 @@ func main() {
 		log.Fatalf("decrypt err = %v", err)
 	}
 	fmt.Printf("decrypt result : %s\n", plainText)
+	if plainText != content {
+		log.Fatalf("plainText not equal content. plainText: %s", plainText)
+	}
 }
